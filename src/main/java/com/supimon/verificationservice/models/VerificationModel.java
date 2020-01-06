@@ -2,10 +2,13 @@ package com.supimon.verificationservice.models;
 
 public class VerificationModel {
 
-    private boolean verified;
+    private Boolean verified;
     private String userId;
 
-    public VerificationModel(boolean verified, String userId) {
+    public VerificationModel() {
+    }
+
+    public VerificationModel(Boolean verified, String userId) {
         this.verified = verified;
         this.userId = userId;
     }
@@ -14,7 +17,7 @@ public class VerificationModel {
         return verified;
     }
 
-    public void setVerified(boolean verified) {
+    public void setVerified(Boolean verified) {
         this.verified = verified;
     }
 

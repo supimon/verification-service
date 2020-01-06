@@ -1,37 +1,40 @@
 package com.supimon.verificationservice.resource;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
+import com.google.api.core.ApiFuture;
+import com.google.cloud.firestore.*;
+import com.google.firebase.cloud.FirestoreClient;
 import com.supimon.verificationservice.models.VerificationModel;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/verification")
 public class VerificationResource {
 
     @RequestMapping("/{chefId}")
-    public boolean getVerification(@PathVariable("chefId") String chefId) throws IOException {
+    public Boolean getVerification(@PathVariable("chefId") String chefId) throws InterruptedException, ExecutionException {
 
-        FileInputStream serviceAccount =
-                new FileInputStream("src/main/resources/chefapp-eeae0-firebase-adminsdk-tujtr-198a71e00a.json");
+        Firestore db = FirestoreClient.getFirestore();
 
-        FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                .setDatabaseUrl("https://chefapp-eeae0.firebaseio.com")
-                .build();
+        CollectionReference chefVer = db.collection("verification");
+        // Create a query against the collection.
+        Query query = chefVer.whereEqualTo("chefId", chefId);
 
-        FirebaseApp.initializeApp(options);
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
 
-        return getVerificationDetails(chefId).isVerified();
-    }
+        List<QueryDocumentSnapshot> documents = querySnapshot.get().getDocuments();
 
-    private VerificationModel getVerificationDetails(String chefId){
-        return new VerificationModel(true, "ADM24");
+        VerificationModel verificationModel = new VerificationModel();
+
+        for (QueryDocumentSnapshot document : documents) {
+            verificationModel.setUserId(document.getString("chefId"));
+            verificationModel.setVerified(document.getBoolean("verified"));
+        }
+
+        return verificationModel.isVerified();
     }
 }
